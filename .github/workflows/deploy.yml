@@ -31,19 +31,12 @@ jobs:
 
       - name: Triển khai lên DevOps Classroom
         run: |
-          # Cấu hình các thông số repo và port
           REPO="?uuid=d3d3beeb-3af3-4d3a-8ead-2209a36f7885/${{ github.event.repository.name }}"
           CONTAINER_PORT=80
-          
-          # Gửi request đến webhook để deploy
           RESPONSE=$(curl -sS -w "\n%{http_code}" -X POST "${{ secrets.DEPLOY_URL }}?repo=$REPO&tag=latest&slot=4&container_port=$CONTAINER_PORT&strict_container_port=0")
-          
-          # Tách nội dung body và mã HTTP code (Sửa lỗi sed ở đây)
           BODY=$(echo "$RESPONSE" | sed '$d')
           CODE=$(echo "$RESPONSE" | tail -n1)
-          
-          echo "Webhook HTTP status: $CODE"
-          
+          echo "Webhook HTTP: $CODE"
           if [ "$CODE" -lt 200 ] || [ "$CODE" -ge 300 ]; then
             echo "Deploy thất bại. Xem chi tiết trong nhóm log bên dưới."
             echo "::group::Chi tiết webhook JSON"
@@ -51,7 +44,6 @@ jobs:
             echo "::endgroup::"
             exit 1
           fi
-          
           echo "Deploy thành công."
           echo "::group::Chi tiết webhook JSON"
           echo "$BODY" | python3 -m json.tool 2>/dev/null || echo "$BODY"
